@@ -27,17 +27,12 @@ for (let x=-10;x<10;x++) {
       let geometry= new THREE.IcosahedronGeometry(1.0);
       geometry.translate(x*3,y*3,-10);
       let crystal = new THREE.Mesh( geometry, material );
+	  crystal.MyPos=new THREE.Vector3(x*3,y*3,-10);
 	  shapes.push(crystal);
 	  scene.add( crystal );
 	}
 }
 
-/*
-const geometry2= new THREE.IcosahedronGeometry(1.0);
-geometry2.translate(-2,2,-1);
-const crystal2 = new THREE.Mesh( geometry2, material );
-scene.add( crystal2 );
-*/
 const light = new THREE.AmbientLight( 0x7F0000 ); // red light
 scene.add( light );
 const plight = new THREE.PointLight( 0x0000FF, 1, 100 );
@@ -45,24 +40,25 @@ plight.position.set( 5, 5, 5 );
 scene.add( plight );
 camera.position.x = 0;
 camera.position.y = 0;
-camera.position.z = 0;
-camera.rotation.x = .6;
+camera.position.z = 30;
+camera.rotation.x = 0;
 let angle=0.0;
 let angle2=0.0;
 
 function animate() {
 	requestAnimationFrame( animate );
+	angle+=0.06;
+	angle2+=0.06;
+	let first=true;
 	shapes.forEach((shape)=>{
-		angle+=0.0001;
-		angle2+=0.005;
-       let xangle=shape.position.x+angle;
-	   let yangle=shape.position.y+angle2;
+	   if (first) console.log(shape);
+	   first=false;
+       let xangle=shape.MyPos.x/5+angle;
+	   let yangle=shape.MyPos.y/5+angle2;
 	   shape.position.z=2*Math.cos(xangle)+2*Math.sin(yangle);
+	   shape.rotation.z += 0.001;
 	}
 	);
-    //crystal.rotation.z += 0.01;
-	//crystal2.rotation.x+=0.05
-   // crystal.rotation.y += 0.01;
 	renderer.render( scene, camera );
 }
 animate();
