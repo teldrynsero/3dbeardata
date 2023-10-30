@@ -1,77 +1,173 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
+// Use the fetch API to load JSON data from an external file
+fetch('beardata.json')
+  .then(response => response.json())
+  .then(data => {
+    renderBearModels(data);
+    //bearData = data;
+    //console.log(data);
+  })
+  .catch(error => {
+    console.error('Error loading JSON data:', error);
+  });
+
+// Set up scene
 const scene = new THREE.Scene();
+// Set up camera
 const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+// Set background color
+scene.background = new THREE.Color(0xeeeeee);
 
+// Set up renderer
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
-const controls = new OrbitControls( camera, renderer.domElement );
+const loader = new GLTFLoader();
+camera.position.set( 0, 0, 10 );
 
-const gridHelper = new THREE.GridHelper( 30, 30 );
-scene.add( gridHelper );
+// Camera position
+const zoomSpeed = 0.1;
+const moveXSpeed = 0.1;
+const moveYSpeed = 0.1;
 
-const material = new THREE.ShaderMaterial( {
+// Set up lights
+const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x444444, 1 );
+hemiLight.position.set( 0, 20, 0 );
+scene.add( hemiLight );
 
-	uniforms: {
-		time: { value: 1.0 },
-		resolution: { value: new THREE.Vector2() }
-	},
+const dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
+dirLight.position.set( 100, 100, -10 );
+scene.add( dirLight );
 
-	vertexShader: document.getElementById( 'vertexShader' ).textContent,
-	fragmentShader: document.getElementById( 'fragmentShader' ).textContent
+// Array of bears
+const bearModels = [];
+// New texture?
+//const newTexturePath = "Sky_Blue.png";
 
-} );
-//const material = new THREE.MeshBasicMaterial( { color: 0x007F00 } );
+// Render bears from json file
+function renderBearModels(bearData) {
+  //const bearSpacing = 2; // Spacing between bears
+  //const totalBears = bearData.length;
 
-//const geometry = new THREE.BoxGeometry( 1, 1, 1 );
-const shapes=new Array();
-for (let x=-10;x<10;x++) {
-	for(let y=-10;y<10;y++) {
-      let geometry= new THREE.IcosahedronGeometry(1.0);
-      geometry.translate(x*3,10,y*3);
-      let crystal = new THREE.Mesh( geometry, material );
-	  crystal.MyPos=new THREE.Vector3(x*3,10,y*3);
-	  shapes.push(crystal);
-	  scene.add( crystal );
-	}
+  // Bear x position
+  let x = -6;
+  // Bear y position
+  let y = 8;
+
+  bearData.forEach(function(bearData, index) {
+    loader.load( '/low-poly_brown_bear.glb', function ( gltf ) {
+      const bearModel = gltf.scene;
+      bearModels.push(bearModel);
+      //scene.add(bearModel);
+
+      bearModel.position.set(x, y, 0); // Set the position of the bear model
+
+      if (index % 8 == 0) {
+        y = y - 1.5;
+        x = -6;
+        //console.log("Bear #" + index + " is going down.");
+      }
+
+      //const newTexturePath = 'Sky_Blue.png'; // Path to the new texture image
+
+      // Scale bears based on given body mass
+      const bodyMass = bearData["NetBodyMass(kg)"];
+      const scaleFactor = 0.01;
+      bearModel.scale.set(scaleFactor * bodyMass, scaleFactor * bodyMass, scaleFactor * bodyMass);
+
+      // Set the position of the bear model
+      bearModel.position.x = x;
+      bearModel.position.y = y;
+
+      //bearModel.scale.set(1,1,1);
+
+      // Set x for next bear
+      x = x + 2;
+      //y++;
+
+      scene.add(bearModel);
+      animate();
+
+    }, undefined, function ( error ) {
+
+      console.error( error );
+
+    });
+    //console.log("Hello from bear #" + index + ": " + bearData.BearNo);
+  }); 
 }
-
-const light = new THREE.AmbientLight( 0x7F0000 ); // red light
-scene.add( light );
-
-const plight = new THREE.PointLight( 0x00FFFF, 1, 100 );
-plight.position.set( 5, 5, 5 );
-scene.add( plight );
-
-const sphereSize = 1;
-const pointLightHelper = new THREE.PointLightHelper( plight, sphereSize );
-scene.add( pointLightHelper );
-camera.position.x = 0;
-camera.position.y = 0;
-camera.position.z = 30;
-camera.rotation.x = 0;
-let angle=0.0;
-let angle2=0.0;
-controls.update();
 
 function animate() {
-	requestAnimationFrame( animate );
-	angle+=0.06;
-	angle2+=0.06;
-	let first=true;
-	shapes.forEach((shape)=>{
-	   if (first) console.log(shape);
-	   first=false;
-       let xangle=shape.MyPos.x/5+angle;
-	   let zangle=shape.MyPos.z/5+angle2;
-	   shape.position.y=2*Math.cos(xangle)+2*Math.sin(zangle);
-	  // shape.rotation.z += 0.001;
-	}
-	);
-	controls.update();
-	renderer.render( scene, camera );
-}
-animate();
+    requestAnimationFrame(animate);
+  
+    // Rotate the bear model
+    //if (bearModel) {
+    //  bearModel.rotation.x += 0.005;
+    //  bearModel.rotation.y += 0.005;
+    //}
+  
+    renderer.render(scene, camera);
+  }
+
+// Add mouse interaction
+let isDragging = false;
+let previousMouseX = 0;
+let previousMouseY = 0;
+
+document.addEventListener('mousedown', (event) => {
+  isDragging = true;
+  previousMouseX = event.clientX;
+  previousMouseY = event.clientY;
+});
+
+document.addEventListener('mousemove', (event) => {
+    if (isDragging) {
+      const deltaX = event.clientX - previousMouseX;
+      const deltaY = event.clientY - previousMouseY;
+  
+      bearModels.forEach((bearModel) => {
+        bearModel.rotation.x += deltaY * 0.01;
+        bearModel.rotation.y += deltaX * 0.01;
+      });
+  
+      previousMouseX = event.clientX;
+      previousMouseY = event.clientY;
+    }
+  });
+  
+document.addEventListener('mouseup', () => {
+  isDragging = false;
+});
+
+document.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  switch (key) {
+    case 's':
+      // Move down
+      camera.position.y -= moveYSpeed;
+      break;
+    case 'w':
+      // Move up
+      camera.position.y += moveYSpeed;
+      break;
+    case 'a':
+      // Move left
+      camera.position.x -= moveXSpeed;
+      break;
+    case 'd':
+      // Move right
+      camera.position.x += moveXSpeed;
+      break;
+    case 'q':
+      // Zoom in
+      camera.position.z -= zoomSpeed;
+      break;
+    case 'e':
+      // Zoom out
+      camera.position.z += zoomSpeed;
+      break;
+  }
+});
