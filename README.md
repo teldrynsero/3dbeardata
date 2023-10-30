@@ -1,1 +1,0 @@
-Rendering of 3d bear data
