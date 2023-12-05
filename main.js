@@ -44,8 +44,12 @@ scene.add( dirLight );
 
 // Array of bears
 const bearModels = [];
-// New texture?
-//const newTexturePath = "Sky_Blue.png";
+
+const textureMappings = {
+  KATM: 'KATM',
+  KOD: 'KOD',
+  LACL: 'LACL',
+};
 
 // Render bears from json file
 function renderBearModels(bearData) {
@@ -65,13 +69,34 @@ function renderBearModels(bearData) {
 
       bearModel.position.set(x, y, 0); // Set the position of the bear model
 
-      if (index % 8 == 0) {
+      if (index % 8 == 0) { // Bears are in rows of 8
         y = y - 1.5;
         x = -6;
         //console.log("Bear #" + index + " is going down.");
       }
 
-      //const newTexturePath = 'Sky_Blue.png'; // Path to the new texture image
+      const bearpop = bearData["BearPop"];
+      if (textureMappings[bearpop]) {
+        //console.log("Hello from bear #" + bearData.BearPop + ": " + bearData.BearNo);
+        bearModel.traverse(function (child) {
+          //console.log("Material for Mesh:", child.material);
+          if (child.isMesh && child.material.name === 'Brown_bear') {
+            // Change the color for materials with the name 'brown_bear'
+            if (bearData.BearPop == "KATM")
+            {
+              child.material.color.setRGB(0.255, 0.859, 0.949);
+            }
+            if (bearData.BearPop == "KOD")
+            {
+              child.material.color.setRGB(1.0, 0.647, 0.471);;
+            }
+            if (bearData.BearPop == "LACL")
+            {
+              child.material.color.setRGB(0.561, 0.812, 0.357);;
+            }
+          }
+        });
+      }
 
       // Scale bears based on given body mass
       const bodyMass = bearData["NetBodyMass(kg)"];
