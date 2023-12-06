@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 // Use the fetch API to load JSON data from an external file
 fetch('beardata.json')
@@ -13,12 +14,25 @@ fetch('beardata.json')
     console.error('Error loading JSON data:', error);
   });
 
+  /*
+function createCubModel(onCubModelLoad) {
+  const cubLoader = new GLTFLoader();
+
+  cubLoader.load('/low-poly_brown_bear.glb', function (cubGltf) {
+    const cubModel = cubGltf.scene;
+    onCubModelLoad(cubModel);
+  }, undefined, function (error) {
+    console.error('Error loading cub model:', error);
+  });
+}
+*/
+
 // Set up scene
 const scene = new THREE.Scene();
 // Set up camera
 const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
 // Set background color
-scene.background = new THREE.Color(0xeeeeee);
+//scene.background = new THREE.Color(0xeeeeee);
 
 // Set up renderer
 const renderer = new THREE.WebGLRenderer();
@@ -42,8 +56,23 @@ const dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
 dirLight.position.set( 100, 100, -10 );
 scene.add( dirLight );
 
+
+scene.background = new
+THREE.CubeTextureLoader()
+	.setPath( 'sky/' )
+	.load( [
+				'px.jpg',
+				'nx.jpg',
+				'py.jpg',
+				'ny.jpg',
+				'pz.jpg',
+				'nz.jpg'
+			] );
+
+
 // Array of bears
 const bearModels = [];
+const cubModels = []; // Add a new array for cub models
 
 const textureMappings = {
   KATM: 'KATM',
@@ -64,8 +93,25 @@ function renderBearModels(bearData) {
   bearData.forEach(function(bearData, index) {
     loader.load( '/low-poly_brown_bear.glb', function ( gltf ) {
       const bearModel = gltf.scene;
+      //bearModel.name = bearData["BearNo"];
       bearModels.push(bearModel);
+      
+
       //scene.add(bearModel);
+
+      /*
+      if (bearData.CubAge != "None") {
+        createCubModel(function (cubModel) {
+          console.log(x);
+          console.log("MAKING A CUB");
+          const cubScaleFactor = 0.5;
+          cubModel.scale.set(cubScaleFactor, cubScaleFactor, cubScaleFactor);
+          cubModel.position.set(x + 2, y + 2, 0);
+          cubModels.push(cubModel); // Push the cub model to the array
+          scene.add(cubModel);
+        });
+      }
+      */
 
       bearModel.position.set(x, y, 0); // Set the position of the bear model
 
@@ -121,10 +167,32 @@ function renderBearModels(bearData) {
       console.error( error );
 
     });
+    //console.log("CUB MODELS: " );
+    //console.log(cubModels);
+    //console.log("BEAR MODELS: " );
+    //console.log(bearModels);
     //console.log("Hello from bear #" + index + ": " + bearData.BearNo);
   }); 
 }
 
+
+// Function to handle window resize
+function handleWindowResize() {
+  const newWidth = window.innerWidth;
+  const newHeight = window.innerHeight;
+
+  // Update renderer size
+  renderer.setSize(newWidth, newHeight);
+
+  // Update camera aspect ratio
+  camera.aspect = newWidth / newHeight;
+  camera.updateProjectionMatrix();
+}
+
+// Listen for window resize events
+window.addEventListener('resize', handleWindowResize);
+
+const controls = new OrbitControls(camera, renderer.domElement);
 function animate() {
     requestAnimationFrame(animate);
   
@@ -133,6 +201,7 @@ function animate() {
     //  bearModel.rotation.x += 0.005;
     //  bearModel.rotation.y += 0.005;
     //}
+    controls.update();
   
     renderer.render(scene, camera);
   }
@@ -157,6 +226,8 @@ document.addEventListener('mousemove', (event) => {
         bearModel.rotation.x += deltaY * 0.01;
         bearModel.rotation.y += deltaX * 0.01;
       });
+
+      //scene.rotateY(1);
   
       previousMouseX = event.clientX;
       previousMouseY = event.clientY;
