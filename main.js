@@ -72,7 +72,7 @@ THREE.CubeTextureLoader()
 
 // Array of bears
 const bearModels = [];
-const cubModels = []; // Add a new array for cub models
+//const cubModels = []; // Add a new array for cub models
 
 const textureMappings = {
   KATM: 'KATM',
@@ -196,11 +196,6 @@ const controls = new OrbitControls(camera, renderer.domElement);
 function animate() {
     requestAnimationFrame(animate);
   
-    // Rotate the bear model
-    //if (bearModel) {
-    //  bearModel.rotation.x += 0.005;
-    //  bearModel.rotation.y += 0.005;
-    //}
     controls.update();
   
     renderer.render(scene, camera);
